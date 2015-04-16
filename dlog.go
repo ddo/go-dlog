@@ -38,13 +38,14 @@ func New(name string) func(...interface{}) {
 	color := colors[i%len(colors)]
 	i++
 
-	//delta
+	//save for delta
 	prevTime := time.Now()
 
 	return func(arg ...interface{}) {
 		now := time.Now()
 
 		delta := now.Sub(prevTime).Nanoseconds()
+		prevTime = now
 
 		timestamp := now.Format("15:04:05.000")
 
