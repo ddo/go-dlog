@@ -1,8 +1,9 @@
 package dlog
 
 import (
-	"log"
+	"fmt"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -33,16 +34,43 @@ func New(name string) func(...interface{}) {
 		return func(...interface{}) {}
 	}
 
+	//color
 	color := colors[i%len(colors)]
 	i++
 
-	logger := log.New(os.Stdout, "", 0)
+	//delta
+	prevTime := time.Now()
 
 	return func(arg ...interface{}) {
-		timestamp := time.Now().Format("15:04:05.000")
-		fmt := "\033[" + color + "m" + timestamp + " " + name + "\t▶\033[0m"
+		now := time.Now()
 
-		arg = append([]interface{}{fmt}, arg...)
-		logger.Println(arg...)
+		delta := now.Sub(prevTime).Nanoseconds()
+
+		timestamp := now.Format("15:04:05.000")
+
+		prefix := fmt.Sprintf("\033[%vm%v %-6s %-10s ▶\033[0m", color, timestamp, humanizeNano(delta), name)
+
+		arg = append([]interface{}{prefix}, arg...)
+		fmt.Println(arg...)
 	}
+}
+
+func humanizeNano(n int64) string {
+	var suffix string
+
+	switch {
+	case n > 1e9:
+		n /= 1e9
+		suffix = "s"
+	case n > 1e6:
+		n /= 1e6
+		suffix = "ms"
+	case n > 1e3:
+		n /= 1e3
+		suffix = "us"
+	default:
+		suffix = "ns"
+	}
+
+	return strconv.Itoa(int(n)) + suffix
 }

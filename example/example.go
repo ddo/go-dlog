@@ -12,10 +12,10 @@ func main() {
 	log := dlog.New("example")
 	log("some log")
 
-	example2.Test("example 2")
-	example2.Test("example 3")
-	example2.Test("example 4")
-	example2.Test("example 5")
+	example2.Test("1234567890")
+	example2.Test("example:child 2")
+	example2.Test("example:child 3")
+	example2.Test("example:child 4")
 
 	time.Sleep(time.Second)
 
