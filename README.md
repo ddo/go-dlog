@@ -3,7 +3,7 @@
 
 ![screenshot][screenshot]
 
-> inspire by TJ [debug](https://github.com/visionmedia/debug)
+> inspired by TJ [debug](https://github.com/visionmedia/debug)
 
 ## installation
 
