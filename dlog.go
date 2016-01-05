@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -68,21 +69,9 @@ func New(name string, writer io.Writer) func(...interface{}) {
 		delta := now.Sub(prevTime)
 		prevTime = now
 
-		// get caller
-		caller := "unknown"
-
-		pc := make([]uintptr, 1)
-
-		if runtime.Callers(2, pc) == 1 {
-			f := runtime.FuncForPC(pc[0])
-			// file, line := f.FileLine(pc[0])
-
-			caller = f.Name()
-		}
-
 		log := &Log{
 			Name:   name,
-			Caller: caller,
+			Caller: getCaller(),
 
 			Timestamp: now,
 			Delta:     delta,
@@ -116,6 +105,23 @@ func write(writer io.Writer, log *Log, color uint8) {
 	arg := append([]interface{}{prefix}, log.Data...)
 
 	fmt.Fprintln(writer, arg...)
+}
+
+func getCaller() (caller string) {
+	caller = "unknown"
+
+	pc := make([]uintptr, 1)
+
+	if runtime.Callers(3, pc) == 1 {
+		f := runtime.FuncForPC(pc[0])
+		callers := strings.Split(f.Name(), ".")
+
+		if len(callers) > 0 {
+			caller = callers[len(callers)-1]
+		}
+	}
+
+	return
 }
 
 func humanizeNano(n time.Duration) string {
