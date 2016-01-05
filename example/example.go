@@ -1,23 +1,30 @@
 package main
 
 import (
-	"time"
+	"bufio"
+	"os"
 
 	"github.com/ddo/go-dlog"
-
-	"./example2"
 )
 
 func main() {
-	log := dlog.New("example")
-	log("some log")
+	logDefault := dlog.New("logDefault", nil)
+	logStdout := dlog.New("logStdout", os.Stdout)
+	logStderr := dlog.New("logStderr", os.Stderr)
 
-	example2.Test("1234567890")
-	example2.Test("example:child 2")
-	example2.Test("example:child 3")
-	example2.Test("example:child 4")
+	writer := bufio.NewWriter(os.Stdout)
+	logWriter := dlog.New("logWriter", writer)
 
-	time.Sleep(time.Second)
+	logDefault("logDefault 1")
+	logDefault("logDefault 2")
 
-	log("some log")
+	logStdout("logStdout 1")
+	logStdout("logStdout 2")
+
+	logStderr("logStderr 1")
+	logStderr("logStderr 2")
+
+	logWriter("logWriter 1")
+	logWriter("logWriter 2")
+	writer.Flush()
 }

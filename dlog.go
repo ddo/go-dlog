@@ -1,23 +1,31 @@
 package dlog
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"runtime"
 	"strconv"
 	"time"
+)
+
+const (
+	// SEPARATOR = "▶"
+	SEPARATOR = ":"
 )
 
 // round robin color
 var i = 0
 
 // terminal colors
-var colors = []string{
-	"31",
-	"32",
-	"33",
-	"34",
-	"35",
-	"36",
+var colors = []uint8{
+	31,
+	32,
+	33,
+	34,
+	35,
+	36,
 }
 
 var enabled = false
@@ -29,34 +37,88 @@ func init() {
 	}
 }
 
-func New(name string) func(...interface{}) {
+// Caller: function name
+type Log struct {
+	Name   string `json:"name"`
+	Caller string `json:"caller"`
+
+	Timestamp time.Time     `json:"timestamp"`
+	Delta     time.Duration `json:"delta"`
+
+	Data []interface{} `json:"data"`
+}
+
+func New(name string, writer io.Writer) func(...interface{}) {
+	// disable dlog
+	// or should we send it to dev/null ?
 	if !enabled {
 		return func(...interface{}) {}
 	}
 
-	//color
+	// color
 	color := colors[i%len(colors)]
 	i++
 
-	//save for delta
+	// save for delta
 	prevTime := time.Now()
 
 	return func(arg ...interface{}) {
 		now := time.Now()
 
-		delta := now.Sub(prevTime).Nanoseconds()
+		delta := now.Sub(prevTime)
 		prevTime = now
 
-		timestamp := now.Format("15:04:05.000")
+		// get caller
+		caller := "unknown"
 
-		prefix := fmt.Sprintf("\033[%vm%v %-6s %-10s ▶\033[0m", color, timestamp, humanizeNano(delta), name)
+		pc := make([]uintptr, 1)
 
-		arg = append([]interface{}{prefix}, arg...)
-		fmt.Println(arg...)
+		if runtime.Callers(2, pc) == 1 {
+			f := runtime.FuncForPC(pc[0])
+			// file, line := f.FileLine(pc[0])
+
+			caller = f.Name()
+		}
+
+		log := &Log{
+			Name:   name,
+			Caller: caller,
+
+			Timestamp: now,
+			Delta:     delta,
+
+			Data: arg,
+		}
+
+		write(writer, log, color)
 	}
 }
 
-func humanizeNano(n int64) string {
+func write(writer io.Writer, log *Log, color uint8) {
+	if writer != nil && writer != os.Stdout {
+		jsonStr, err := json.Marshal(log)
+
+		// skip err
+		if err != nil {
+			return
+		}
+
+		fmt.Fprintln(writer, string(jsonStr))
+		return
+	}
+
+	writer = os.Stdout
+
+	timestamp := log.Timestamp.Format("15:04:05.000")
+
+	prefix := fmt.Sprintf("\033[%vm%v %-6s %-10s #%v %v\033[0m", color, timestamp, humanizeNano(log.Delta), log.Name, log.Caller, SEPARATOR)
+
+	arg := append([]interface{}{prefix}, log.Data...)
+
+	fmt.Fprintln(writer, arg...)
+}
+
+func humanizeNano(n time.Duration) string {
 	var suffix string
 
 	switch {
