@@ -10,8 +10,7 @@ import (
 func main() {
 	hook := make(chan *dlog.Log)
 
-	logStdoutHook := dlog.New(&dlog.Option{
-		Name: "logStdoutHook",
+	logStdoutHook := dlog.New("logStdoutHook", &dlog.Option{
 		Hook: hook,
 	})
 

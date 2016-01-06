@@ -9,8 +9,7 @@ import (
 
 func main() {
 	writer := bufio.NewWriter(os.Stdout)
-	logWriter := dlog.New(&dlog.Option{
-		Name:   "logWriter",
+	logWriter := dlog.New("logWriter", &dlog.Option{
 		Writer: writer,
 	})
 

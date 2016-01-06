@@ -8,13 +8,12 @@ import (
 
 // if nil writer -> os.Stdout
 func main() {
-	logDefault := dlog.New(nil)
+	logDefault := dlog.New("logDefault", nil)
 
 	logDefault("logDefault 1")
 	logDefault("logDefault 2")
 
-	logStdout := dlog.New(&dlog.Option{
-		Name:   "logStdout",
+	logStdout := dlog.New("logStdout", &dlog.Option{
 		Writer: os.Stdout,
 	})
 

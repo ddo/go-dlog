@@ -13,8 +13,7 @@ func main() {
 		panic(err)
 	}
 
-	logWriter := dlog.New(&dlog.Option{
-		Name:   "logWriter",
+	logWriter := dlog.New("logWriter", &dlog.Option{
 		Writer: file,
 	})
 
