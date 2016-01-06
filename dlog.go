@@ -38,6 +38,12 @@ func init() {
 	}
 }
 
+type Option struct {
+	Name   string
+	Writer io.Writer
+	Hook   chan<- *Log
+}
+
 // Caller: function name
 type Log struct {
 	Name   string `json:"name"`
@@ -49,11 +55,16 @@ type Log struct {
 	Data []interface{} `json:"data"`
 }
 
-func New(name string, writer io.Writer) func(...interface{}) {
+func New(opt *Option) func(...interface{}) {
 	// disable dlog
 	// or should we send it to dev/null ?
 	if !enabled {
 		return func(...interface{}) {}
+	}
+
+	// blank option as default
+	if opt == nil {
+		opt = &Option{}
 	}
 
 	// color
@@ -70,7 +81,7 @@ func New(name string, writer io.Writer) func(...interface{}) {
 		prevTime = now
 
 		log := &Log{
-			Name:   name,
+			Name:   opt.Name,
 			Caller: getCaller(),
 
 			Timestamp: now,
@@ -79,7 +90,13 @@ func New(name string, writer io.Writer) func(...interface{}) {
 			Data: arg,
 		}
 
-		write(writer, log, color)
+		// writer to writer
+		write(opt.Writer, log, color)
+
+		// send to hook
+		if opt.Hook != nil {
+			opt.Hook <- log
+		}
 	}
 }
 
@@ -92,6 +109,7 @@ func write(writer io.Writer, log *Log, color uint8) {
 			return
 		}
 
+		// skip err
 		fmt.Fprintln(writer, string(jsonStr))
 		return
 	}
@@ -104,6 +122,7 @@ func write(writer io.Writer, log *Log, color uint8) {
 
 	arg := append([]interface{}{prefix}, log.Data...)
 
+	// skip err
 	fmt.Fprintln(writer, arg...)
 }
 
@@ -143,6 +162,7 @@ func trimCaller(funcName string) string {
 	return arrCaller[1]
 }
 
+// copty from TJ
 func humanizeNano(n time.Duration) string {
 	var suffix string
 
