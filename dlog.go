@@ -39,7 +39,6 @@ func init() {
 }
 
 type Option struct {
-	Name   string
 	Writer io.Writer
 	Hook   chan<- *Log
 }
@@ -55,7 +54,7 @@ type Log struct {
 	Data []interface{} `json:"data"`
 }
 
-func New(opt *Option) func(...interface{}) {
+func New(name string, opt *Option) func(...interface{}) {
 	// disable dlog
 	// or should we send it to dev/null ?
 	if !enabled {
@@ -81,7 +80,7 @@ func New(opt *Option) func(...interface{}) {
 		prevTime = now
 
 		log := &Log{
-			Name:   opt.Name,
+			Name:   name,
 			Caller: getCaller(),
 
 			Timestamp: now,
