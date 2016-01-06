@@ -11,12 +11,12 @@ func main() {
 	logDefault := dlog.New("logDefault", nil)
 
 	logDefault("logDefault 1")
-	logDefault("logDefault 2")
+	logDefault("logDefault 2", "something else")
 
 	logStdout := dlog.New("logStdout", &dlog.Option{
 		Writer: os.Stdout,
 	})
 
-	logStdout("logStdout 1")
-	logStdout("logStdout 2")
+	logStdout("logStdout 1", "something else", "something else")
+	logStdout("logStdout 2", "something else", "something else", "something else")
 }
