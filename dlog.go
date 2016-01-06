@@ -108,20 +108,39 @@ func write(writer io.Writer, log *Log, color uint8) {
 }
 
 func getCaller() (caller string) {
-	caller = "unknown"
+	caller = ""
 
 	pc := make([]uintptr, 1)
 
 	if runtime.Callers(3, pc) == 1 {
 		f := runtime.FuncForPC(pc[0])
-		callers := strings.Split(f.Name(), ".")
-
-		if len(callers) > 0 {
-			caller = callers[len(callers)-1]
-		}
+		caller = trimCaller(f.Name())
 	}
 
 	return
+}
+
+// "github.com/ddo/request.(*Client).Request"
+// -> (*Client).Request
+// or
+// "github.com/ddo/request.New"
+// -> New
+func trimCaller(funcName string) string {
+	// ex:
+	// funcName = "github.com/ddo/request.(*Client).Request"
+	// arrDir = [github.com ddo request.(*Client).Request]
+	// lastDir = request.(*Client).Request
+	// arrCaller = [request. (*Client).Request]
+
+	arrDir := strings.Split(funcName, "/")
+	lastDir := arrDir[len(arrDir)-1]
+	arrCaller := strings.SplitAfterN(lastDir, ".", 2)
+
+	if len(arrCaller) < 2 {
+		return ""
+	}
+
+	return arrCaller[1]
 }
 
 func humanizeNano(n time.Duration) string {
