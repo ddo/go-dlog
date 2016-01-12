@@ -25,5 +25,5 @@ DLOG=* go run example.go
 set ***DLOG*** environment to any to enable the logging
 
 [godoc-img]: https://img.shields.io/badge/godoc-Reference-brightgreen.svg?style=flat-square
-[godoc-url]: https://gopkg.in/ddo/go-dlog.v1
+[godoc-url]: https://godoc.org/gopkg.in/ddo/go-dlog.v1
 [screenshot]: http://i.imgur.com/RsZJzgs.png
