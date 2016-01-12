@@ -8,13 +8,13 @@
 ## installation
 
 ```sh
-go get github.com/ddo/go-dlog
+go get gopkg.in/ddo/go-dlog.v1
 ```
 
 ## usage
 
 ```go
-log := dlog.New("example")
+log := dlog.New("logger", nil)
 log("some log")
 ```
 
@@ -25,5 +25,5 @@ DLOG=* go run example.go
 set ***DLOG*** environment to any to enable the logging
 
 [godoc-img]: https://img.shields.io/badge/godoc-Reference-brightgreen.svg?style=flat-square
-[godoc-url]: https://godoc.org/github.com/ddo/go-dlog
-[screenshot]: http://i.imgur.com/b7OcA3R.png
+[godoc-url]: https://gopkg.in/ddo/go-dlog.v1
+[screenshot]: http://i.imgur.com/RsZJzgs.png
