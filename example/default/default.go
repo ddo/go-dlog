@@ -8,15 +8,15 @@ import (
 
 // if nil writer -> os.Stdout
 func main() {
-	logDefault := dlog.New("logDefault", nil)
+	logEmail := dlog.New("email", nil)
+	logEmail("send to hi@gmail.com", "support@gmail.com")
 
-	logDefault("logDefault 1")
-	logDefault("logDefault 2", "something else")
-
-	logStdout := dlog.New("logStdout", &dlog.Option{
+	// same as default = writer = os.Stdout
+	logHttp := dlog.New("http", &dlog.Option{
 		Writer: os.Stdout,
 	})
 
-	logStdout("logStdout 1", "something else", "something else")
-	logStdout("logStdout 2", "something else", "something else", "something else")
+	logHttp("GET", "/orders", "200", "OK")
+	logHttp("POST", "/order", "201", "new order")
+	logEmail("send to customer@gmail.com")
 }
