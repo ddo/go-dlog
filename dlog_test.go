@@ -6,7 +6,7 @@ import (
 
 var caseTrimCaller = [][]string{
 	[]string{"github.com/ddo/request.New", "New"},
-	[]string{"github.com/ddo/request.(*Client).Request", "(*Client).Request"},
+	[]string{"github.com/ddo/request.(*Client).Request", "Request"},
 	[]string{"main.main", "main"},
 }
 

@@ -152,13 +152,13 @@ func trimCaller(funcName string) string {
 
 	arrDir := strings.Split(funcName, "/")
 	lastDir := arrDir[len(arrDir)-1]
-	arrCaller := strings.SplitAfterN(lastDir, ".", 2)
+	arrCaller := strings.Split(lastDir, ".")
 
 	if len(arrCaller) < 2 {
 		return ""
 	}
 
-	return arrCaller[1]
+	return arrCaller[len(arrCaller)-1]
 }
 
 // copty from TJ
