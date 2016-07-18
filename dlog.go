@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -70,14 +71,21 @@ func New(name string, opt *Option) func(...interface{}) {
 	color := colors[i%len(colors)]
 	i++
 
+	// sync
+	mutex := sync.Mutex{}
+
 	// save for delta
 	prevTime := time.Now()
 
 	return func(arg ...interface{}) {
 		now := time.Now()
 
+		mutex.Lock()
+
 		delta := now.Sub(prevTime)
 		prevTime = now
+
+		mutex.Unlock()
 
 		log := &Log{
 			Name:   name,
