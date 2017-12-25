@@ -9,15 +9,15 @@ import (
 
 func main() {
 	writer := bufio.NewWriter(os.Stdout)
-	logWriter := dlog.New("logWriter", &dlog.Option{
+	logWriter := dlog.New("logWriter.Info", &dlog.Option{
 		Writer: writer,
 	})
 
-	logWriter("logWriter 1")
-	logWriter("logWriter 2")
+	logWriter.Info("logWriter.Info 1")
+	logWriter.Info("logWriter.Info 2")
 	writer.Flush()
 
-	logWriter("logWriter 3")
-	logWriter("logWriter 4")
+	logWriter.Info("logWriter.Info 3")
+	logWriter.Info("logWriter.Info 4")
 	writer.Flush()
 }

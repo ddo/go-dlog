@@ -8,7 +8,6 @@ import (
 
 func main() {
 	file, err := os.Create("/tmp/dlog_test.txt")
-
 	if err != nil {
 		panic(err)
 	}
@@ -17,8 +16,8 @@ func main() {
 		Writer: file,
 	})
 
-	logWriter("logWriter 1")
-	logWriter("logWriter 2")
+	logWriter.Info("logWriter 1")
+	logWriter.Info("logWriter 2")
 
 	file.Sync()
 

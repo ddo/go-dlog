@@ -29,8 +29,8 @@ func main() {
 		}
 	})()
 
-	logStdoutHook("logStdoutHook 1")
-	logStdoutHook("logStdoutHook 2")
+	logStdoutHook.Info("logStdoutHook 1")
+	logStdoutHook.Info("logStdoutHook 2")
 
 	// wait for hook output before main terminate
 	time.Sleep(time.Second * 10)
@@ -50,7 +50,6 @@ func postToSlack(log *dlog.Log) {
 			"text":       text,
 		},
 	})
-
 	if err != nil {
 		fmt.Println(err)
 		return

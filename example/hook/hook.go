@@ -21,8 +21,8 @@ func main() {
 		}
 	})()
 
-	logStdoutHook("logStdoutHook 1")
-	logStdoutHook("logStdoutHook 2")
+	logStdoutHook.Info("logStdoutHook 1")
+	logStdoutHook.Info("logStdoutHook 2")
 
 	// wait for hook output before main terminate
 	time.Sleep(time.Second)

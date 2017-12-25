@@ -9,14 +9,14 @@ import (
 // if nil writer -> os.Stdout
 func main() {
 	logEmail := dlog.New("email", nil)
-	logEmail("send to hi@gmail.com", "support@gmail.com")
+	logEmail.Info("send to hi@gmail.com", "support@gmail.com")
 
 	// same as default = writer = os.Stdout
-	logHttp := dlog.New("http", &dlog.Option{
+	LogHTTP := dlog.New("http", &dlog.Option{
 		Writer: os.Stdout,
 	})
 
-	logHttp("GET", "/orders", "200", "OK")
-	logHttp("POST", "/order", "201", "new order")
-	logEmail("send to customer@gmail.com")
+	LogHTTP.Debug("GET", "/orders", "200", "OK")
+	LogHTTP.Debug("POST", "/order", "201", "new order")
+	logEmail.Info("send to customer@gmail.com")
 }

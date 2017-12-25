@@ -5,187 +5,177 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
 const (
-	// SEPARATOR = "▶"
-	SEPARATOR = ":"
+	separator = ":" // or ▶
 )
 
-// round robin color
-var i = 0
-
 // terminal colors
-var colors = []uint8{
-	31,
-	32,
-	33,
-	34,
-	35,
-	36,
-}
+const (
+	black uint8 = iota + 30
+	red
+	green
+	yellow
+	blue
+	purple
+	teal
+)
 
-var enabled = false
+// rank
+const (
+	noRank uint8 = iota
+	errorRank
+	warnRank
+	infoRank
+	debugRank
+)
+
+var rank = errorRank
 
 // as long as DLOG env is not empty -> show log
 func init() {
-	if os.Getenv("DLOG") != "" {
-		enabled = true
+	switch strings.ToUpper(os.Getenv("DLOG")) {
+	case "DEBUG", "*":
+		rank = debugRank
+	case "INFO":
+		rank = infoRank
+	case "WARN":
+		rank = warnRank
+	case "ERROR", "ERR":
+		rank = errorRank
+	default:
+		rank = noRank
 	}
 }
 
+// Dlog .
+type Dlog struct {
+	name string
+
+	prevTime   time.Time
+	prevTimeMu sync.Mutex
+
+	log    func(uint8, *Log)
+	writer io.Writer
+	hook   chan<- *Log
+
+	Debug            handler
+	Info, Done, Fail handler
+	Warn             handler
+	Error            handler
+}
+
+type handler func(...interface{})
+
+// or should we send it to dev/null ?
+func logNull(...interface{}) {}
+
+// Option .
 type Option struct {
 	Writer io.Writer
 	Hook   chan<- *Log
 }
 
-// Caller: function name
-type Log struct {
-	Name   string `json:"name"`
-	Caller string `json:"caller"`
-
-	Timestamp time.Time     `json:"timestamp"`
-	Delta     time.Duration `json:"delta"`
-
-	Data []interface{} `json:"data"`
-}
-
-func New(name string, opt *Option) func(...interface{}) {
-	// disable dlog
-	// or should we send it to dev/null ?
-	if !enabled {
-		return func(...interface{}) {}
-	}
-
+// New .
+func New(name string, opt *Option) (_dlog *Dlog) {
 	// blank option as default
 	if opt == nil {
 		opt = &Option{}
 	}
 
-	// color
-	color := colors[i%len(colors)]
-	i++
+	// new dlog
+	_dlog = &Dlog{
+		name: name,
 
-	// sync
-	mutex := sync.Mutex{}
+		prevTime: time.Now(),
 
-	// save for delta
-	prevTime := time.Now()
-
-	return func(arg ...interface{}) {
-		now := time.Now()
-
-		mutex.Lock()
-
-		delta := now.Sub(prevTime)
-		prevTime = now
-
-		mutex.Unlock()
-
-		log := &Log{
-			Name:   name,
-			Caller: getCaller(),
-
-			Timestamp: now,
-			Delta:     delta,
-
-			Data: arg,
-		}
-
-		// writer to writer
-		write(opt.Writer, log, color)
-
-		// send to hook
-		if opt.Hook != nil {
-			opt.Hook <- log
-		}
-	}
-}
-
-func write(writer io.Writer, log *Log, color uint8) {
-	if writer != nil && writer != os.Stdout {
-		jsonStr, err := json.Marshal(log)
-
-		// skip err
-		if err != nil {
-			return
-		}
-
-		// skip err
-		fmt.Fprintln(writer, string(jsonStr))
-		return
+		writer: opt.Writer,
+		hook:   opt.Hook,
 	}
 
-	writer = os.Stdout
+	// writer
+	if _dlog.writer == nil {
+		_dlog.writer = os.Stdout
+		_dlog.log = _dlog.write
+	} else {
+		_dlog.log = _dlog.writeJSON
+	}
 
-	timestamp := log.Timestamp.Format("15:04:05.000")
+	// default handler
+	_dlog.Debug = logNull
+	_dlog.Info, _dlog.Done, _dlog.Fail = logNull, logNull, logNull
+	_dlog.Done = logNull
+	_dlog.Warn = logNull
+	_dlog.Error = logNull
 
-	prefix := fmt.Sprintf("\033[%vm%v %-6s %-10s #%v %v\033[0m", color, timestamp, humanizeNano(log.Delta), log.Name, log.Caller, SEPARATOR)
-
-	arg := append([]interface{}{prefix}, log.Data...)
-
-	// skip err
-	fmt.Fprintln(writer, arg...)
-}
-
-func getCaller() (caller string) {
-	caller = ""
-
-	pc := make([]uintptr, 1)
-
-	if runtime.Callers(3, pc) == 1 {
-		f := runtime.FuncForPC(pc[0])
-		caller = trimCaller(f.Name())
+	if rank >= debugRank {
+		_dlog.Debug = _dlog.handlerFunc(teal)
+	}
+	if rank >= infoRank {
+		_dlog.Info = _dlog.handlerFunc(blue)
+		_dlog.Done = _dlog.handlerFunc(green)
+		_dlog.Fail = _dlog.handlerFunc(purple)
+	}
+	if rank >= warnRank {
+		_dlog.Warn = _dlog.handlerFunc(yellow)
+	}
+	if rank >= errorRank {
+		_dlog.Error = _dlog.handlerFunc(red)
 	}
 
 	return
 }
 
-// "github.com/ddo/request.(*Client).Request"
-// -> (*Client).Request
-// or
-// "github.com/ddo/request.New"
-// -> New
-func trimCaller(funcName string) string {
-	// ex:
-	// funcName = "github.com/ddo/request.(*Client).Request"
-	// arrDir = [github.com ddo request.(*Client).Request]
-	// lastDir = request.(*Client).Request
-	// arrCaller = [request. (*Client).Request]
+func (d *Dlog) handlerFunc(color uint8) handler {
+	return func(arg ...interface{}) {
+		// time
+		d.prevTimeMu.Lock()
+		now, delta := getDelta(d.prevTime)
+		d.prevTime = now
+		d.prevTimeMu.Unlock()
 
-	arrDir := strings.Split(funcName, "/")
-	lastDir := arrDir[len(arrDir)-1]
-	arrCaller := strings.Split(lastDir, ".")
+		_log := NewLog(d.name, now, delta, arg...)
 
-	if len(arrCaller) < 2 {
-		return ""
+		// write to writer
+		d.log(color, _log)
+
+		// send to hook
+		if d.hook != nil {
+			d.hook <- _log
+		}
 	}
-
-	return arrCaller[len(arrCaller)-1]
 }
 
-// copty from TJ
-func humanizeNano(n time.Duration) string {
-	var suffix string
+func (d *Dlog) write(color uint8, _log *Log) {
+	timestamp := _log.Timestamp.Format("15:04:05.000")
+	prefix := fmt.Sprintf("\033[%vm%v %s #%v %v\033[0m", color, timestamp, _log.Name, _log.Caller, separator)
+	delta := fmt.Sprintf("\033[%vm+%s\033[0m", black, humanizeNano(_log.Delta))
 
-	switch {
-	case n > 1e9:
-		n /= 1e9
-		suffix = "s"
-	case n > 1e6:
-		n /= 1e6
-		suffix = "ms"
-	case n > 1e3:
-		n /= 1e3
-		suffix = "us"
-	default:
-		suffix = "ns"
+	arg := append([]interface{}{prefix}, _log.Data...)
+	arg = append(arg, delta)
+
+	// skip err
+	fmt.Fprintln(d.writer, arg...)
+}
+
+func (d *Dlog) writeJSON(color uint8, _log *Log) {
+	jsonStr, err := json.Marshal(_log)
+	// skip err
+	if err != nil {
+		return
 	}
 
-	return strconv.Itoa(int(n)) + suffix
+	// skip err
+	fmt.Fprintln(d.writer, string(jsonStr))
+	return
+}
+
+func getDelta(prevTime time.Time) (now time.Time, delta time.Duration) {
+	now = time.Now()
+	delta = now.Sub(prevTime)
+	return
 }

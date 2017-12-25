@@ -3,7 +3,9 @@
 
 ![screenshot][screenshot]
 
-> inspired by TJ [debug](https://github.com/visionmedia/debug)
+[godoc-img]: https://img.shields.io/badge/godoc-Reference-brightgreen.svg?style=flat-square
+[godoc-url]: https://godoc.org/gopkg.in/ddo/go-dlog.v2
+[screenshot]: http://i.imgur.com/cZOEREE.png
 
 ## installation
 
@@ -14,16 +16,23 @@ go get gopkg.in/ddo/go-dlog.v1
 ## usage
 
 ```go
-log := dlog.New("logger", nil)
-log("some log")
+logger := dlog.New("logger", nil)
+
+logger.Debug("some log")
+logger.Info("some log")
+logger.Warn("some log")
+logger.Error("some log")
 ```
 
 ```sh
 DLOG=* go run example.go
 ```
 
-set ***DLOG*** environment to any to enable the logging
+## env
 
-[godoc-img]: https://img.shields.io/badge/godoc-Reference-brightgreen.svg?style=flat-square
-[godoc-url]: https://godoc.org/gopkg.in/ddo/go-dlog.v1
-[screenshot]: http://i.imgur.com/RsZJzgs.png
+set ***DLOG*** environment to (case-insensitive)
+
+* ``DEBUG`` or ``*`` to enable #Debug
+* ``INFO`` to enable #Info, #Done, #Fail
+* ``WARN`` to enable #Warn
+* ``ERROR`` to enable #Error
