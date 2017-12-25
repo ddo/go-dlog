@@ -30,9 +30,9 @@ DLOG=* go run example.go
 
 ## env
 
-set ***DLOG*** environment to (case-insensitive)
+set ***DLOG*** environment(case-insensitive) to 
 
-* ``DEBUG`` or ``*`` to enable #Debug
-* ``INFO`` to enable #Info, #Done, #Fail
-* ``WARN`` to enable #Warn
-* ``ERROR`` to enable #Error
+* ``DEBUG`` or ``*`` to enable ``#Debug`` and above
+* ``INFO`` to enable ``#Info``, ``#Done``, ``#Fail`` and above
+* ``WARN`` to enable ``#Warn`` and above
+* ``ERROR`` to enable ``#Error``
