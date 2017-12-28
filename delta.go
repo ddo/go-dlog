@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+func getDelta(prevTime time.Time) (now time.Time, delta time.Duration) {
+	now = time.Now()
+	delta = now.Sub(prevTime)
+	return
+}
+
 func humanizeNano(n time.Duration) string {
 	var suffix string
 

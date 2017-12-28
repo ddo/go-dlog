@@ -173,9 +173,3 @@ func (d *Dlog) writeJSON(color uint8, _log *Log) {
 	fmt.Fprintln(d.writer, string(jsonStr))
 	return
 }
-
-func getDelta(prevTime time.Time) (now time.Time, delta time.Duration) {
-	now = time.Now()
-	delta = now.Sub(prevTime)
-	return
-}
