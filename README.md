@@ -10,7 +10,7 @@
 ## installation
 
 ```sh
-go get gopkg.in/ddo/go-dlog.v1
+go get gopkg.in/ddo/go-dlog.v2
 ```
 
 ## usage
@@ -30,7 +30,7 @@ DLOG=* go run example.go
 
 ## env
 
-set ***DLOG*** environment(case-insensitive) to 
+set ``DLOG`` environment(case-insensitive) to
 
 * ``DEBUG`` or ``*`` to enable ``#Debug`` and above
 * ``INFO`` to enable ``#Info``, ``#Done``, ``#Fail`` and above
