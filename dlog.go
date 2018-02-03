@@ -78,6 +78,7 @@ func logNull(...interface{}) {}
 type Option struct {
 	Writer io.Writer
 	Hook   chan<- *Log
+	Type   string
 }
 
 // New .
@@ -100,9 +101,16 @@ func New(name string, opt *Option) (_dlog *Dlog) {
 	// writer
 	if _dlog.writer == nil {
 		_dlog.writer = os.Stdout
-		_dlog.log = _dlog.write
-	} else {
+	}
+
+	// log
+	switch opt.Type {
+	case "json":
 		_dlog.log = _dlog.writeJSON
+	case "simple":
+		_dlog.log = _dlog.writeSimple
+	default:
+		_dlog.log = _dlog.write
 	}
 
 	// default handler
@@ -157,6 +165,16 @@ func (d *Dlog) write(color uint8, _log *Log) {
 
 	arg := append([]interface{}{prefix}, _log.Data...)
 	arg = append(arg, delta)
+
+	// skip err
+	fmt.Fprintln(d.writer, arg...)
+}
+
+// no color, no time, no delta
+func (d *Dlog) writeSimple(color uint8, _log *Log) {
+	prefix := fmt.Sprintf("%s #%v %v", _log.Name, _log.Caller, separator)
+
+	arg := append([]interface{}{prefix}, _log.Data...)
 
 	// skip err
 	fmt.Fprintln(d.writer, arg...)
