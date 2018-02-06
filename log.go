@@ -6,6 +6,8 @@ import (
 
 // Log is a single log object
 type Log struct {
+	Rank string `json:"rank"`
+
 	Name   string `json:"name"`
 	Caller string `json:"caller"` // function name
 
@@ -16,8 +18,10 @@ type Log struct {
 }
 
 // NewLog .
-func NewLog(name string, now time.Time, delta time.Duration, arg ...interface{}) *Log {
+func NewLog(rank, name string, now time.Time, delta time.Duration, arg ...interface{}) *Log {
 	return &Log{
+		Rank: rank,
+
 		Name:   name,
 		Caller: getCaller(),
 

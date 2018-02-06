@@ -14,6 +14,17 @@ const (
 	separator = ":" // or ▶
 )
 
+// rank
+const (
+	noRank uint8 = iota
+	errorRank
+	warnRank
+	infoRank
+	debugRank
+)
+
+var rank = errorRank
+
 // terminal colors
 const (
 	black uint8 = iota + 30
@@ -25,16 +36,14 @@ const (
 	teal
 )
 
-// rank
-const (
-	noRank uint8 = iota
-	errorRank
-	warnRank
-	infoRank
-	debugRank
-)
-
-var rank = errorRank
+var colors = map[string]uint8{
+	"DEBUG": teal,
+	"INFO":  blue,
+	"DONE":  green,
+	"FAIL":  purple,
+	"WARN":  yellow,
+	"ERROR": red,
+}
 
 // as long as DLOG env is not empty -> show log
 func init() {
@@ -59,7 +68,7 @@ type Dlog struct {
 	prevTime   time.Time
 	prevTimeMu sync.Mutex
 
-	log    func(uint8, *Log)
+	log    func(*Log)
 	writer io.Writer
 	hook   chan<- *Log
 
@@ -121,24 +130,24 @@ func New(name string, opt *Option) (_dlog *Dlog) {
 	_dlog.Error = logNull
 
 	if rank >= debugRank {
-		_dlog.Debug = _dlog.handlerFunc(teal)
+		_dlog.Debug = _dlog.handlerFunc("DEBUG")
 	}
 	if rank >= infoRank {
-		_dlog.Info = _dlog.handlerFunc(blue)
-		_dlog.Done = _dlog.handlerFunc(green)
-		_dlog.Fail = _dlog.handlerFunc(purple)
+		_dlog.Info = _dlog.handlerFunc("INFO")
+		_dlog.Done = _dlog.handlerFunc("DONE")
+		_dlog.Fail = _dlog.handlerFunc("FAIL")
 	}
 	if rank >= warnRank {
-		_dlog.Warn = _dlog.handlerFunc(yellow)
+		_dlog.Warn = _dlog.handlerFunc("WARN")
 	}
 	if rank >= errorRank {
-		_dlog.Error = _dlog.handlerFunc(red)
+		_dlog.Error = _dlog.handlerFunc("ERROR")
 	}
 
 	return
 }
 
-func (d *Dlog) handlerFunc(color uint8) handler {
+func (d *Dlog) handlerFunc(rank string) handler {
 	return func(arg ...interface{}) {
 		// time
 		d.prevTimeMu.Lock()
@@ -146,10 +155,10 @@ func (d *Dlog) handlerFunc(color uint8) handler {
 		d.prevTime = now
 		d.prevTimeMu.Unlock()
 
-		_log := NewLog(d.name, now, delta, arg...)
+		_log := NewLog(rank, d.name, now, delta, arg...)
 
 		// write to writer
-		d.log(color, _log)
+		d.log(_log)
 
 		// send to hook
 		if d.hook != nil {
@@ -158,9 +167,9 @@ func (d *Dlog) handlerFunc(color uint8) handler {
 	}
 }
 
-func (d *Dlog) write(color uint8, _log *Log) {
+func (d *Dlog) write(_log *Log) {
 	timestamp := _log.Timestamp.Format("15:04:05.000")
-	prefix := fmt.Sprintf("\033[%vm%v %s #%v %v\033[0m", color, timestamp, _log.Name, _log.Caller, separator)
+	prefix := fmt.Sprintf("\033[%vm%v %s #%v %v\033[0m", colors[_log.Rank], timestamp, _log.Name, _log.Caller, separator)
 	delta := fmt.Sprintf("\033[%vm+%s\033[0m", black, humanizeNano(_log.Delta))
 
 	arg := append([]interface{}{prefix}, _log.Data...)
@@ -171,8 +180,8 @@ func (d *Dlog) write(color uint8, _log *Log) {
 }
 
 // no color, no time, no delta
-func (d *Dlog) writeSimple(color uint8, _log *Log) {
-	prefix := fmt.Sprintf("%s #%v %v", _log.Name, _log.Caller, separator)
+func (d *Dlog) writeSimple(_log *Log) {
+	prefix := fmt.Sprintf("%-5s %s #%v %v", _log.Rank, _log.Name, _log.Caller, separator)
 
 	arg := append([]interface{}{prefix}, _log.Data...)
 
@@ -180,7 +189,7 @@ func (d *Dlog) writeSimple(color uint8, _log *Log) {
 	fmt.Fprintln(d.writer, arg...)
 }
 
-func (d *Dlog) writeJSON(color uint8, _log *Log) {
+func (d *Dlog) writeJSON(_log *Log) {
 	jsonStr, err := json.Marshal(_log)
 	// skip err
 	if err != nil {
