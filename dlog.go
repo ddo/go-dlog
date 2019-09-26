@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -65,10 +64,7 @@ func init() {
 type Dlog struct {
 	name string
 
-	prevTime   time.Time
-	prevTimeMu sync.Mutex
-
-	log    func(*Log)
+	log    func(*log.Log)
 	writer io.Writer
 	hook   chan<- *Log
 
@@ -100,8 +96,6 @@ func New(name string, opt *Option) (_dlog *Dlog) {
 	// new dlog
 	_dlog = &Dlog{
 		name: name,
-
-		prevTime: time.Now(),
 
 		writer: opt.Writer,
 		hook:   opt.Hook,
@@ -149,13 +143,7 @@ func New(name string, opt *Option) (_dlog *Dlog) {
 
 func (d *Dlog) handlerFunc(rank string) handler {
 	return func(arg ...interface{}) {
-		// time
-		d.prevTimeMu.Lock()
-		now, delta := getDelta(d.prevTime)
-		d.prevTime = now
-		d.prevTimeMu.Unlock()
-
-		_log := NewLog(rank, d.name, now, delta, arg...)
+		_log := log.New(rank, d.name, time.Now(), arg...)
 
 		// write to writer
 		d.log(_log)
@@ -170,10 +158,8 @@ func (d *Dlog) handlerFunc(rank string) handler {
 func (d *Dlog) write(_log *Log) {
 	timestamp := _log.Timestamp.Format("15:04:05.000")
 	prefix := fmt.Sprintf("\033[%vm%v %s #%v %v\033[0m", colors[_log.Rank], timestamp, _log.Name, _log.Caller, separator)
-	delta := fmt.Sprintf("\033[%vm+%s\033[0m", black, humanizeNano(_log.Delta))
 
 	arg := append([]interface{}{prefix}, _log.Data...)
-	arg = append(arg, delta)
 
 	// skip err
 	fmt.Fprintln(d.writer, arg...)
