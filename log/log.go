@@ -1,7 +1,9 @@
-package dlog
+package log
 
 import (
 	"time"
+
+	"github.com/ddo/go-dlog/caller"
 )
 
 // Log is a single log object
@@ -11,22 +13,20 @@ type Log struct {
 	Name   string `json:"name"`
 	Caller string `json:"caller"` // function name
 
-	Timestamp time.Time     `json:"timestamp"`
-	Delta     time.Duration `json:"delta"`
+	Timestamp time.Time `json:"timestamp"`
 
 	Data []interface{} `json:"data"`
 }
 
-// NewLog .
-func NewLog(rank, name string, now time.Time, delta time.Duration, arg ...interface{}) *Log {
+// New returns new Log object
+func New(rank, name string, now time.Time, arg ...interface{}) *Log {
 	return &Log{
 		Rank: rank,
 
 		Name:   name,
-		Caller: getCaller(),
+		Caller: caller.Get(),
 
 		Timestamp: now,
-		Delta:     delta,
 
 		Data: arg,
 	}

@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/ddo/go-dlog/log"
 )
 
 const (
@@ -66,7 +68,7 @@ type Dlog struct {
 
 	log    func(*log.Log)
 	writer io.Writer
-	hook   chan<- *Log
+	hook   chan<- *log.Log
 
 	Debug            handler
 	Info, Done, Fail handler
@@ -82,7 +84,7 @@ func logNull(...interface{}) {}
 // Option .
 type Option struct {
 	Writer io.Writer
-	Hook   chan<- *Log
+	Hook   chan<- *log.Log
 	Type   string
 }
 
@@ -109,11 +111,13 @@ func New(name string, opt *Option) (_dlog *Dlog) {
 	// log
 	switch opt.Type {
 	case "json":
-		_dlog.log = _dlog.writeJSON
+		_dlog.log = _dlog.WriteJSON
+
 	case "simple":
-		_dlog.log = _dlog.writeSimple
+		_dlog.log = _dlog.WriteSimple
+
 	default:
-		_dlog.log = _dlog.write
+		_dlog.log = _dlog.Write
 	}
 
 	// default handler
@@ -155,7 +159,8 @@ func (d *Dlog) handlerFunc(rank string) handler {
 	}
 }
 
-func (d *Dlog) write(_log *Log) {
+// Write writes pretty log with colors
+func (d *Dlog) Write(_log *log.Log) {
 	timestamp := _log.Timestamp.Format("15:04:05.000")
 	prefix := fmt.Sprintf("\033[%vm%v %s #%v %v\033[0m", colors[_log.Rank], timestamp, _log.Name, _log.Caller, separator)
 
@@ -165,8 +170,8 @@ func (d *Dlog) write(_log *Log) {
 	fmt.Fprintln(d.writer, arg...)
 }
 
-// no color, no time, no delta
-func (d *Dlog) writeSimple(_log *Log) {
+// WriteSimple writes simple log with no color, no time
+func (d *Dlog) WriteSimple(_log *log.Log) {
 	prefix := fmt.Sprintf("%-5s %s #%v %v", _log.Rank, _log.Name, _log.Caller, separator)
 
 	arg := append([]interface{}{prefix}, _log.Data...)
@@ -175,7 +180,8 @@ func (d *Dlog) writeSimple(_log *Log) {
 	fmt.Fprintln(d.writer, arg...)
 }
 
-func (d *Dlog) writeJSON(_log *Log) {
+// WriteJSON writes log as json
+func (d *Dlog) WriteJSON(_log *log.Log) {
 	jsonStr, err := json.Marshal(_log)
 	// skip err
 	if err != nil {
