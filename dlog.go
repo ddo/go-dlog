@@ -62,7 +62,7 @@ func init() {
 	}
 }
 
-// Dlog .
+// Dlog is the logger object
 type Dlog struct {
 	name string
 
@@ -81,14 +81,14 @@ type handler func(...interface{})
 // or should we send it to dev/null ?
 func logNull(...interface{}) {}
 
-// Option .
+// Option is the option for #New
 type Option struct {
 	Writer io.Writer
 	Hook   chan<- *log.Log
 	Type   string
 }
 
-// New .
+// New returns the Dlog object
 func New(name string, opt *Option) (_dlog *Dlog) {
 	// blank option as default
 	if opt == nil {
