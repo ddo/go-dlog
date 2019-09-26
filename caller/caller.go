@@ -1,18 +1,19 @@
-package dlog
+package caller
 
 import (
 	"runtime"
 	"strings"
 )
 
-func getCaller() (caller string) {
+// Get returns the runtime caller name
+func Get() (caller string) {
 	caller = ""
 
 	pc := make([]uintptr, 1)
 
 	if runtime.Callers(4, pc) == 1 {
 		f := runtime.FuncForPC(pc[0])
-		caller = trimCaller(f.Name())
+		caller = trim(f.Name())
 	}
 
 	return
@@ -23,7 +24,7 @@ func getCaller() (caller string) {
 // or
 // "github.com/ddo/request.New"
 // -> New
-func trimCaller(funcName string) string {
+func trim(funcName string) string {
 	// ex:
 	// funcName = "github.com/ddo/request.(*Client).Request"
 	// arrDir = [github.com ddo request.(*Client).Request]
