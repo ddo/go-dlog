@@ -99,21 +99,34 @@ func New(name string, opt *Option) (_dlog *Dlog) {
 		opt = &Option{}
 	}
 
+	// writer
+	// default is stdout
+	writer := opt.Writer
+	if opt.Writer == nil {
+		writer = os.Stdout
+	}
+
+	// type
+	// default is json
+	// but if writer is stdout and tty then pretty
+	_type := opt.Type
+	if _type == "" && writer == os.Stdout && IsTTY(os.Stdout) {
+		_type = "pretty"
+	}
+	if _type == "" {
+		_type = "json"
+	}
+
 	// new dlog
 	_dlog = &Dlog{
 		name: name,
 
-		writer: opt.Writer,
+		writer: writer,
 		hook:   opt.Hook,
 	}
 
-	// writer
-	if _dlog.writer == nil {
-		_dlog.writer = os.Stdout
-	}
-
-	// log
-	switch opt.Type {
+	// type
+	switch _type {
 	case "json":
 		_dlog.log = _dlog.WriteJSON
 
