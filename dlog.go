@@ -51,12 +51,16 @@ func init() {
 	switch strings.ToUpper(os.Getenv("DLOG")) {
 	case "DEBUG", "*":
 		rank = debugRank
+
 	case "INFO":
 		rank = infoRank
+
 	case "WARN":
 		rank = warnRank
+
 	case "ERROR", "ERR":
 		rank = errorRank
+
 	default:
 		rank = noRank
 	}
@@ -130,14 +134,17 @@ func New(name string, opt *Option) (_dlog *Dlog) {
 	if rank >= debugRank {
 		_dlog.Debug = _dlog.handlerFunc("DEBUG")
 	}
+
 	if rank >= infoRank {
 		_dlog.Info = _dlog.handlerFunc("INFO")
 		_dlog.Done = _dlog.handlerFunc("DONE")
 		_dlog.Fail = _dlog.handlerFunc("FAIL")
 	}
+
 	if rank >= warnRank {
 		_dlog.Warn = _dlog.handlerFunc("WARN")
 	}
+
 	if rank >= errorRank {
 		_dlog.Error = _dlog.handlerFunc("ERROR")
 	}
